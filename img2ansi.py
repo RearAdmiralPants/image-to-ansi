@@ -238,6 +238,23 @@ def build_ramp(
                 continue
             seen.add(ch)
             candidates.append(ch)
+    elif mode == "fullnoblocks":
+        # Same as `full` but with every codepoint in the Block Elements
+        # range (U+2580 – U+259F) filtered out: half-blocks, quarter-blocks,
+        # shades, bars, full block. Space stays (it's U+0020, outside the
+        # range) as the "empty cell" option for regions that really are
+        # uniform background. Intent: classic ASCII-art look where legible
+        # glyphs form the image, rather than blocks winning most cells.
+        font_chars = enumerate_full_font(font_path)
+        seen = {" "}
+        candidates = [" "]
+        for ch in font_chars:
+            if 0x2580 <= ord(ch) <= 0x259F:
+                continue
+            if ch in seen:
+                continue
+            seen.add(ch)
+            candidates.append(ch)
     else:
         # Treat the mode string as a literal list of characters to use.
         candidates = list(mode)
@@ -353,6 +370,12 @@ def fit_cells(
         image_2x[1::2, 1::2, :],
     ], axis=2).astype(np.float32)
 
+    # Per-cell, per-channel color range. Used below to clamp fg/bg so a
+    # glyph can't extrapolate into colors that aren't locally present --
+    # see the note on the clipping step.
+    T_lo = T.min(axis=2)                       # (rows, cols, 3)
+    T_hi = T.max(axis=2)
+
     N = coverages.shape[0]
 
     best_resid = np.full((rows, cols), np.inf, dtype=np.float32)
@@ -401,8 +424,19 @@ def fit_cells(
                 fg[all_one] = mean_T
                 bg[all_one] = 0.0
 
-        fg = np.clip(fg, 0.0, 1.0)
-        bg = np.clip(bg, 0.0, 1.0)
+        # Clamp fg/bg per-channel to the cell's own color range, not the
+        # global [0, 1]. Low-coverage glyphs (a tiny ASCII dot, a comma)
+        # otherwise let the unconstrained LSQ push fg far outside the local
+        # range to fit a small brightness bump in one quadrant -- then
+        # [0, 1] clipping pins it to pure white, residual is still low
+        # because coverage x error is small, and the argmin picks a glyph
+        # that renders as a bright speck against a dim cell. Constraining
+        # to [T_lo, T_hi] says "a glyph may not introduce a color that
+        # isn't already present in this cell." For binary-coverage glyphs
+        # (all of the `blocks` ramp) this is a no-op -- fg and bg are
+        # always means of quadrant subsets, always inside [T_lo, T_hi].
+        fg = np.clip(fg, T_lo[None, ...], T_hi[None, ...])
+        bg = np.clip(bg, T_lo[None, ...], T_hi[None, ...])
 
         # Residual: sum over 4 quadrants & 3 channels of squared error.
         #   R[b, r, c, i, ch] = c[b,i] * fg[b,r,c,ch] + (1-c[b,i]) * bg[b,r,c,ch]
@@ -509,7 +543,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--cols", type=int, required=True,
                    help="number of terminal columns")
     p.add_argument("--ramp", default="blocks+ascii",
-                   help="blocks | blocks+ascii | full | <literal chars>")
+                   help="blocks | blocks+ascii | full | fullnoblocks | <literal chars>")
     p.add_argument("--font", default=None,
                    help="monospace TTF path (default: auto-detect)")
     p.add_argument("--font-size", type=int, default=32,

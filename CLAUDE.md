@@ -63,6 +63,18 @@ produces muddy mid-tones; converting to linear → resize → back to sRGB keeps
 the perceived brightness/saturation correct. Both matter; together they
 remove most of what previously looked like "colors off" issues.
 
+**fg/bg are clipped per-channel to the cell's own `[T_lo, T_hi]` range,
+not the global `[0, 1]`.** For low-coverage glyphs (an ASCII `.`, `,`, `'`)
+the unconstrained LSQ will happily set `fg ≈ 1.3` to fit a small brightness
+bump in one quadrant — a `[0, 1]` clip pins it to pure white, `coverage ×
+error` keeps the residual small, and the argmin picks the glyph anyway,
+producing bright-white specks on dim cells. The principled constraint is
+"a glyph may not introduce a color not locally present in this cell." For
+binary-coverage glyphs (all of `blocks`) this is a no-op; it only bites
+when a low-coverage glyph tries to extrapolate. This fix is what stopped
+the scattered-sparkle artifact that was visible in `full`-ramp renders
+(and subtly in `blocks+ascii`).
+
 **PS1 output format.** The art is embedded as a single-quoted here-string
 with `\uE000` (PUA codepoint) as a placeholder for the ESC byte, substituted
 once at runtime via `.Replace([char]0xE000, [char]27)`. This way image
