@@ -25,6 +25,7 @@ Ramp modes:
 - `blocks` — unicode block/half-block/quadrant characters only
 - `blocks+ascii` — blocks + curated ASCII for intermediate coverages
 - `full` — every codepoint present in the font (requires `fonttools`)
+- `fullnoblocks` - every codepoint present in the font, minus blocks
 - any literal string — use exactly those characters as the ramp
 
 Examples:
@@ -33,11 +34,12 @@ Examples:
 .\.venv\Scripts\python.exe .\img2ansi.py img.png img_blocks.ps1 --cols 100 --ramp blocks
 .\.venv\Scripts\python.exe .\img2ansi.py img.png img_ascii.ps1  --cols 100 --ramp blocks+ascii
 .\.venv\Scripts\python.exe .\img2ansi.py img.png img_full.ps1   --cols 100 --ramp full
+.\.venv\Scripts\python.exe .\img2ansi.py img.png img_fullnoblocks.ps1   --cols 100 --ramp fullnoblocks
 
 # (e.g.)
 . .\img_blocks.ps1
 # and/or . .\img_ascii.ps1
-# and/or . .\img_full.ps1
+# and/or . .\img_full.ps1 ... etc.
 ```
 
 ## Important: Windows Terminal contrast adjustment
