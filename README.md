@@ -4,6 +4,10 @@ Convert an image into a truecolor ANSI PowerShell script. Each terminal cell
 is fit to a `(character, fg, bg)` triple by a least-squares match against a
 configurable character ramp.
 
+Currently only generates PowerShell scripts (`.ps1`); while PowerShell does exist
+for Linux, we hope to add support for generating shell/bash scripts and plain `.ansi`
+files in future versions.
+
 ## Setup
 
 ```powershell
@@ -30,7 +34,10 @@ Examples:
 .\.venv\Scripts\python.exe .\img2ansi.py img.png img_ascii.ps1  --cols 100 --ramp blocks+ascii
 .\.venv\Scripts\python.exe .\img2ansi.py img.png img_full.ps1   --cols 100 --ramp full
 
+# (e.g.)
 . .\img_blocks.ps1
+# and/or . .\img_ascii.ps1
+# and/or . .\img_full.ps1
 ```
 
 ## Important: Windows Terminal contrast adjustment

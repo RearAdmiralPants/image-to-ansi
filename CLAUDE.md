@@ -27,7 +27,8 @@ Three ramp modes, all worth trying per image: `blocks`, `blocks+ascii`, `full`
 (every codepoint in the font's cmap that survives filtering). `blocks` is
 coarsest but cleanest; `blocks+ascii` adds partial-coverage ASCII for texture;
 `full` pulls in the whole font and can carry surprising detail in textured
-regions but looks noisy in smooth ones.
+regions but looks noisy in smooth ones. Different modes will also look better/worse
+based upon target font, font size, and number of columns/rows.
 
 ## Non-obvious things that will bite you
 
@@ -90,3 +91,4 @@ well); excessive einsum or broadcast gymnastics is not.
 
 Potential future directions the user has mentioned interest in: more
 features, probably on top of this same scaffold. Nothing specific committed.
+See `TODO.md` for some of the user's thoughts after our first session. 
